@@ -88,7 +88,8 @@ from pyrosetta import *
 import pyrosetta.rosetta.protocols as protocols
 
 init(extra_options = "-constant_seed")  # WARNING: option '-constant_seed' is for testing only! MAKE SURE TO REMOVE IT IN PRODUCTION RUNS!!!!!
-import os; os.chdir('.test.output')
+# commented out so that it didn't keep changing dirs on me
+#import os; os.chdir('.test.output')
 
 # normally, init() works fine
 # for this sample script, we want to ease comparison by making sure all random
@@ -104,7 +105,8 @@ import os; os.chdir('.test.output')
 # Methods
 
 # performs general scanning
-def scanning(pdb_filename, partners, mutant_aa = 'A',
+#def scanning(pdb_filename, partners, mutant_aa = 'A',
+def scanning(pdb_filename, partners, mutant_aa,
         interface_cutoff = 8.0, output = False,
         trials = 1, trial_output = ''):
     """
@@ -198,10 +200,11 @@ def scanning(pdb_filename, partners, mutant_aa = 'A',
 
     #### alternate output using scanning_analysis (see below), only display
     ####    mutations with "deviant" score changes
-    print( 'Likely Hotspot Residues' )
-    for hotspot in scanning_analysis(trial_output):
-        print( hotspot )
-    print( '='*80 )
+    # commented out by colin
+#     print( 'Likely Hotspot Residues' )
+#     for hotspot in scanning_analysis(trial_output):
+#         print( hotspot )
+#     print( '='*80 )
 
 """
 1.  creates a copy of the pose
@@ -522,7 +525,12 @@ the new residue) and the change in score. The Rosetta score functions are not
 scaled to any physical value and proteins vary greatly so the output score
 changes cannot easily be interpreted.
 
-The optional method scanning_analysis averages the values in these files and
+The optional method 
+
+
+
+
+nysis averages the values in these files and
 outputs mutations with potentially significant interactions. Packing makes this
 algorithm VERY NOISY requiring several trials for results to converge. Using the
 default "-constant_seed", the script itself is deterministic for convenience.
@@ -592,47 +600,48 @@ from its bound conformation to it solution-state conformation.
 # parser object for managing input options
 # all defaults are for the example using "test_dock.pdb" with one trial
 #    to provide results quickly
-parser = optparse.OptionParser()
-parser.add_option('--pdb_filename', dest = 'pdb_filename',
-    default = '../test/data/test_dock.pdb',    # default example PDB
-    help = 'the PDB file containing the protein to refine')
-# for more information on "partners", see sample_docking step 2.
-parser.add_option('--partners', dest = 'partners',
-    default = 'E_I',    # default for the example test_dock.pdb
-    help = 'the relative chain partners for docking')
-# scanning options
-parser.add_option('--mutant_aa', dest = 'mutant_aa',
-    default = 'A',    # default to alanine, A
-    help = 'the amino acid to mutate all residues to')
-parser.add_option('--interface_cutoff', dest = 'interface_cutoff',
-    default = '8.0',    # default to 8.0 Angstroms
-    help = 'the distance (in Angstroms) to detect residues for repacking\
-        near the interface')
-parser.add_option('--output', dest = 'output',
-    default = '',    # default off, do now write to file
-    help = 'if True, mutant structures are written to PDB files')
-# trials options
-parser.add_option('--trials', dest='trials',
-    default = '1',    # default to single trial for speed
-    help = 'the number of trials to perform')
-parser.add_option('--trial_output', dest = 'trial_output',
-    default = 'ddG_out',    # if a specific output name is desired
-    help = 'the name preceding all output files')
-(options,args) = parser.parse_args()
+# commented out by colin
+# parser = optparse.OptionParser()
+# parser.add_option('--pdb_filename', dest = 'pdb_filename',
+#     default = '../test/data/test_dock.pdb',    # default example PDB
+#     help = 'the PDB file containing the protein to refine')
+# # for more information on "partners", see sample_docking step 2.
+# parser.add_option('--partners', dest = 'partners',
+#     default = 'E_I',    # default for the example test_dock.pdb
+#     help = 'the relative chain partners for docking')
+# # scanning options
+# parser.add_option('--mutant_aa', dest = 'mutant_aa',
+#     default = 'A',    # default to alanine, A
+#     help = 'the amino acid to mutate all residues to')
+# parser.add_option('--interface_cutoff', dest = 'interface_cutoff',
+#     default = '8.0',    # default to 8.0 Angstroms
+#     help = 'the distance (in Angstroms) to detect residues for repacking\
+#         near the interface')
+# parser.add_option('--output', dest = 'output',
+#     default = '',    # default off, do now write to file
+#     help = 'if True, mutant structures are written to PDB files')
+# # trials options
+# parser.add_option('--trials', dest='trials',
+#     default = '1',    # default to single trial for speed
+#     help = 'the number of trials to perform')
+# parser.add_option('--trial_output', dest = 'trial_output',
+#     default = 'ddG_out',    # if a specific output name is desired
+#     help = 'the name preceding all output files')
+# (options,args) = parser.parse_args()
 
-# PDB file option
-pdb_filename = options.pdb_filename
-partners = options.partners
-# scanning options
-mutant_aa = options.mutant_aa
-interface_cutoff = float(options.interface_cutoff)
-output = bool(options.output)
-# trials options
-trials = int(options.trials)
-trial_output = options.trial_output
+# # PDB file option
+# pdb_filename = options.pdb_filename
+# partners = options.partners
+# # scanning options
+# mutant_aa = options.mutant_aa
+# interface_cutoff = float(options.interface_cutoff)
+# output = bool(options.output)
+# # trials options
+# trials = int(options.trials)
+# trial_output = options.trial_output
 
-scanning(pdb_filename, partners, mutant_aa,
-    interface_cutoff, output, trials, trial_output)
+# scanning(pdb_filename, partners, mutant_aa,
+#     interface_cutoff, output, trials, trial_output)
 
 ################################################################################
 # ALTERNATE SCENARIOS
