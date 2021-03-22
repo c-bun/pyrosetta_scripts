@@ -1,0 +1,7 @@
+NATAA
+USE_INPUT_SC
+start
+   2  A  ALLAA  
+   3  A  ALLAA  
+   4  A  ALLAA  
+   5  A  ALLAA  

@@ -1,4 +1,3 @@
-#!usr/bin/env python
 
 from __future__ import print_function
 
@@ -70,11 +69,12 @@ import rosetta.core.pack.task    # for using resfiles
 #from rosetta import *
 from pyrosetta import *
 
-init(extra_options = "-constant_seed")  # WARNING: option '-constant_seed' is for testing only! MAKE SURE TO REMOVE IT IN PRODUCTION RUNS!!!!!
+#init(extra_options = "-constant_seed")  # WARNING: option '-constant_seed' is for testing only! MAKE SURE TO REMOVE IT IN PRODUCTION RUNS!!!!!
+print("Don't forget to init()")
 #import os; os.chdir('.test.output')
 
 
-def packer_task(pose, PDB_out = False):
+def packer_task(pose, resfile_path, PDB_out = False):
     """
     Demonstrates the syntax necessary for basic usage of the PackerTask object
 		performs demonstrative sidechain packing and selected design
@@ -85,58 +85,10 @@ def packer_task(pose, PDB_out = False):
     # create a copy of the pose
     test_pose = Pose()
     test_pose.assign(pose)
-
-    # this object is contained in PyRosetta v2.0 and above
-    pymover = PyMOLMover()
-
+    
     # create a standard ScoreFunction
     scorefxn = get_fa_scorefxn() #  create_score_function_ws_patch('standard', 'score12')
-
-    ############
-    # PackerTask
-    # a PackerTask encodes preferences and options for sidechain packing, an
-    #    effective Rosetta methodology for changing sidechain conformations, and
-    #    design (mutation)
-    # a PackerTask stores information on a per-residue basis
-    # each residue may be packed or designed
-    # PackerTasks are handled slightly differently in PyRosetta
-    ####pose_packer = PackerTask()    # this line will not work properly
-    pose_packer = standard_packer_task(test_pose)
-    # the pose argument tells the PackerTask how large it should be
-
-    # sidechain packing "optimizes" a pose's sidechain conformations by cycling
-    #    through (Dunbrack) rotamers (sets of chi angles) at a specific residue
-    #    and selecting the rotamer which achieves the lowest score,
-    #    enumerating all possibilities for all sidechains simultaneously is
-    #    impractically expensive so the residues to be packed are individually
-    #    optimized in a "random" order
-    # packing options include:
-    #    -"freezing" the residue, preventing it from changing conformation
-    #    -including the original sidechain conformation when determining the
-    #        lowest scoring conformation
-    pose_packer.restrict_to_repacking()    # turns off design
-    pose_packer.or_include_current(True)    # considers original conformation
-    print( pose_packer )
-
-    # packing and design can be performed by a PackRotamersMover, it requires
-    #    a ScoreFunction, for optimizing the sidechains and a PackerTask,
-    #    setting the packing and design options
-#    packmover = pyrosetta.rosetta.protocols.simple_moves.PackRotamersMover(scorefxn, pose_packer)
-# Changed by colin for compat with rpy4
-    packmover = pyrosetta.rosetta.protocols.minimization_packing.PackRotamersMover(scorefxn, pose_packer)
-
-    scorefxn(pose)    # to prevent verbose output on the next line
-    print( '\nPre packing score:', scorefxn(test_pose) )
-    test_pose.pdb_info().name('original')    # for PyMOLMover
-    pymover.apply(test_pose)
-
-    packmover.apply(test_pose)
-    print( 'Post packing score:',  scorefxn(test_pose) )
-    test_pose.pdb_info().name('packed')    # for PyMOLMover
-    pymover.apply(test_pose)
-    if PDB_out:
-        test_pose.dump_pdb('packed.pdb')
-
+    
     # since the PackerTask specifies how the sidechains change, it has been
     #    extended to include sidechain constitutional changes allowing
     #    protein design, this method of design is very similar to sidechain
@@ -156,18 +108,10 @@ def packer_task(pose, PDB_out = False):
     #    http://www.rosettacommons.org/manuals/archive/rosetta3.1_user_guide/file_resfiles.html
     # manually setting deign options is tedious, the methods below are handy
     #    for creating resfiles
-    # mutate the "middle" residues
-    center = test_pose.total_residue() // 2
-    specific_design = {}
-    for i in range(center - 2, center + 3):
-        specific_design[i] = 'ALLAA'
-    # write a resfile to perform these mutations
-    generate_resfile_from_pose(test_pose, 'sample_resfile', False,
-        specific = specific_design)
 
     # setup the design PackerTask, use the generated resfile
     pose_design = standard_packer_task(test_pose)
-    rosetta.core.pack.task.parse_resfile(test_pose, pose_design, 'sample_resfile' )
+    rosetta.core.pack.task.parse_resfile(test_pose, pose_design, resfile_path)
     print( pose_design )
 
     # prepare a new structure
@@ -176,21 +120,14 @@ def packer_task(pose, PDB_out = False):
     # perform design
 #        designmover = protocols.simple_moves.PackRotamersMover(scorefxn, pose_design)
     designmover = pyrosetta.rosetta.protocols.minimization_packing.PackRotamersMover(scorefxn, pose_design)
-    print( '\nDesign with all proteogenic amino acids at (pose numbered)\
-        residues', center - 2, 'to', center + 2 )
     print( 'Pre-design score:', scorefxn(test_pose) )
-    print( 'Pre-design sequence: ...' + \
-        test_pose.sequence()[center - 5:center + 4] + '...' )
-
-
     designmover.apply(test_pose)    # perform design
     print( '\nPost-design score:', scorefxn(test_pose) )
-    print( 'Post-design sequence: ...' + \
-        test_pose.sequence()[center - 5:center + 4] + '...' )
     test_pose.pdb_info().name( 'designed' )    # for PyMOLMover
-    pymover.apply(test_pose)
+#    pymover.apply(test_pose)
     if PDB_out:
         test_pose.dump_pdb('designed.pdb')
+    return test_pose
 
 ################################################################################
 # PERIPHERAL METHODS
@@ -311,27 +248,7 @@ indicating that the new rotamer has the lowest score of all available rotamers.
 """
 
 ################################################################################
-# COMMANDLINE COMPATIBILITY
-
-# everything below is added to provide commandline usage,
-#   the available options are specified below
-# this method:
-#    1. defines the available options
-#    2. loads in the commandline or default values
-#    3. calls packer_task with these values
-
-# parser object for managing input options
-# all defaults are for the example using "test_in.pdb"
-#commented out by Colin so I can import the code
-# parser = optparse.OptionParser()
-# parser.add_option('--pdb_filename', dest = 'pdb_filename',
-#     default = '../test/data/test_in.pdb',    # default example PDB
-#     help = 'the PDB file containing the loop to remodel' )
-# parser.add_option('--PDB_out', dest = 'PDB_out',
-#     default = '',    # default to False
-#     help = 'flag for dumping structures to PDB files' )
-# (options,args) = parser.parse_args()
-
+# Usage:
 # # PDB file option
 # pdb_filename = options.pdb_filename
 # # create a pose from the desired PDB file
@@ -343,3 +260,4 @@ indicating that the new rotamer has the lowest score of all available rotamers.
 # PDB_out = bool(options.PDB_out)
 
 # packer_task(pose, PDB_out)
+
